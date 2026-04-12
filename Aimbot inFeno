@@ -1,0 +1,22 @@
+local function cariTargetTerdekat(karakterPemain)
+    local maxJarak = 100 -- Jarak maksimal deteksi
+    local targetTerdekat = nil
+    local jarakTerpendek = maxJarak
+
+    -- Mencari di seluruh Workspace
+    for _, obj in pairs(game.Workspace:GetChildren()) do
+        local humanoid = obj:FindFirstChild("Humanoid")
+        local rootPart = obj:FindFirstChild("HumanoidRootPart")
+
+        -- Pastikan objek adalah karakter lain, bukan pemain sendiri, dan masih hidup
+        if humanoid and rootPart and obj ~= karakterPemain and humanoid.Health > 0 then
+            local jarak = (karakterPemain.HumanoidRootPart.Position - rootPart.Position).Magnitude
+            
+            if jarak < jarakTerpendek then
+                jarakTerpendek = jarak
+                targetTerdekat = rootPart
+            end
+        end
+    end
+    return targetTerdekat
+end
