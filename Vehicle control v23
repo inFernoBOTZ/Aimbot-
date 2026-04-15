@@ -1,0 +1,75 @@
+--[[
+    Script Name: inFenoBOTZ
+    Features: Drift Mode, Enhanced Control, Speed Booster
+]]
+
+local Player = game.Players.LocalPlayer
+local Mouse = Player:GetMouse()
+local UserInputService = game:GetService("UserInputService")
+
+-- Konfigurasi inFenoBOTZ
+local DRIFT_FRICTION = 0.3    -- Semakin kecil, semakin licin (nge-drift)
+local NORMAL_FRICTION = 2.0   -- Gesekan normal
+local SPEED_MULTIPLIER = 1.5  -- Pengganda kecepatan
+local STEER_SENSITIVITY = 1.2 -- Ketajaman belok
+
+local isDrifting = false
+
+-- Fungsi Utama
+local function applyVehicleSettings(vehicleSeat)
+    if vehicleSeat and vehicleSeat:IsA("VehicleSeat") then
+        -- Meningkatkan Speed & Torque
+        vehicleSeat.MaxSpeed = 200 * SPEED_MULTIPLIER
+        vehicleSeat.Torque = 50000 
+        vehicleSeat.SteerFloat = STEER_SENSITIVITY
+    end
+end
+
+-- Deteksi Input Tombol (Shift untuk Drift)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.LeftShift then
+        isDrifting = true
+        local character = Player.Character
+        local seat = character and character:FindFirstChildOfClass("Humanoid").SeatPart
+        
+        if seat and seat:IsA("VehicleSeat") then
+            -- Logika inFenoBOTZ: Mengurangi gesekan roda agar slide
+            for _, wheel in pairs(seat.Parent:GetDescendants()) do
+                if wheel:IsA("BasePart") and (wheel.Name == "Wheel" or wheel.Name:find("Tire")) then
+                    wheel.CustomPhysicalProperties = PhysicalProperties.new(DRIFT_FRICTION, 0.3, 0.5)
+                end
+            end
+            print("inFenoBOTZ: Drift Mode ON")
+        end
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.LeftShift then
+        isDrifting = false
+        local character = Player.Character
+        local seat = character and character:FindFirstChildOfClass("Humanoid").SeatPart
+        
+        if seat and seat:IsA("VehicleSeat") then
+            -- Mengembalikan gesekan ke normal
+            for _, wheel in pairs(seat.Parent:GetDescendants()) do
+                if wheel:IsA("BasePart") and (wheel.Name == "Wheel" or wheel.Name:find("Tire")) then
+                    wheel.CustomPhysicalProperties = PhysicalProperties.new(NORMAL_FRICTION, 0.3, 0.5)
+                end
+            end
+            print("inFenoBOTZ: Drift Mode OFF")
+        end
+    end
+end)
+
+-- Inisialisasi saat masuk kendaraan
+Player.CharacterAdded:Connect(function(char)
+    local hum = char:WaitForChild("Humanoid")
+    hum.Seated:Connect(function(active, seat)
+        if active and seat:IsA("VehicleSeat") then
+            applyVehicleSettings(seat)
+        end
+    end)
+end)
